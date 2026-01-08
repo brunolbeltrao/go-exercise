@@ -1,15 +1,17 @@
 ---
 
-## Build and Run (Local)
-
-Prerequisites: Go 1.22+
+## Build and Run (Docker)
 
 ```bash
-# build
-go build -o bin/app ./cmd/server
+# build image
+docker build -t go-exercise:latest .
 
-# run (defaults: PORT=8080, CACHE_TTL=60s, HTTP_TIMEOUT=3s)
-PORT=8080 CACHE_TTL=60s HTTP_TIMEOUT=3s ./bin/app
+# run container (inline env)
+docker run --rm -p 8080:8080 -e PORT=8080 -e CACHE_TTL=60s -e HTTP_TIMEOUT=3s go-exercise:latest
+
+# or using env file in deploy/env
+cp deploy/env/dev.env.example deploy/env/dev.env
+docker run --rm -p 8080:8080 --env-file deploy/env/dev.env go-exercise:latest
 ```
 
 ## API Usage
@@ -66,19 +68,6 @@ go test -v ./test/integration
 TEST_LIVE_KRAKEN=1 go test -v ./test/integration -run Live
 ```
 
-## Docker
-
-```bash
-# build image
-docker build -t go-exercise:latest .
-
-# run container (inline env)
-docker run --rm -p 8080:8080 -e PORT=8080 -e CACHE_TTL=60s -e HTTP_TIMEOUT=3s go-exercise:latest
-
-# or using env file in deploy/env
-cp deploy/env/dev.env.example deploy/env/dev.env
-docker run --rm -p 8080:8080 --env-file deploy/env/dev.env go-exercise:latest
-```
 
 ## Health Endpoints
 
