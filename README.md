@@ -1,46 +1,86 @@
-# Golang Developer Assigment
+---
 
-Develop in Go language a service that will provide an API for retrieval of the Last Traded Price of Bitcoin for the following currency pairs:
+## Build and Run (Local)
 
-1. BTC/USD
-2. BTC/CHF
-3. BTC/EUR
+Prerequisites: Go 1.22+
 
+```bash
+# build
+go build -o bin/app ./cmd/server
 
-The request path is:
-/api/v1/ltp
+# run (defaults: PORT=8080, CACHE_TTL=60s, HTTP_TIMEOUT=3s)
+PORT=8080 CACHE_TTL=60s HTTP_TIMEOUT=3s ./bin/app
+```
 
-The response shall constitute JSON of the following structure:
+## API Usage
+
+```bash
+# All supported pairs
+curl -s "http://localhost:8080/api/v1/ltp"
+
+# Specific pairs (repeated param)
+curl -s "http://localhost:8080/api/v1/ltp?pair=BTC/USD&pair=BTC/EUR"
+
+# Specific pairs (CSV)
+curl -s "http://localhost:8080/api/v1/ltp?pairs=BTC/USD,BTC/CHF"
+```
+
+Response:
+
 ```json
 {
   "ltp": [
-    {
-      "pair": "BTC/CHF",
-      "amount": 49000.12
-    },
-    {
-      "pair": "BTC/EUR",
-      "amount": 50000.12
-    },
-    {
-      "pair": "BTC/USD",
-      "amount": 52000.12
-    }
+    {"pair":"BTC/CHF","amount":49000.12},
+    {"pair":"BTC/EUR","amount":50000.12},
+    {"pair":"BTC/USD","amount":52000.12}
   ]
 }
-
 ```
 
-# Requirements:
+## Environment Variables
 
-1. The incoming request can done for as for a single pair as well for a list of them
-2. You shall provide time accuracy of the data up to the last minute.
-3. Code shall be hosted in a remote public repository
-4. readme.md includes clear steps to build and run the app
-5. Integration tests
-6. Dockerized application
+- `PORT`: server port (default `8080`)
+- `CACHE_TTL`: per-pair cache TTL, e.g. `60s` (default `60s`)
+- `HTTP_TIMEOUT`: upstream Kraken timeout, e.g. `3s` (default `3s`)
 
-# Docs
-The public Kraken API might be used to retrieve the above LTP information
-[API Documentation](https://docs.kraken.com/rest/#tag/Spot-Market-Data/operation/getTickerInformation)
-(The values of the last traded price is called “last trade closed”)
+Optional .env for development:
+
+```bash
+# Copy the example and edit values as needed
+cp env.example .env
+
+# Load into current shell (bash/zsh)
+set -a; source .env; set +a
+```
+
+## Tests
+
+```bash
+# run all tests
+go test ./...
+
+# run only integration tests
+go test -v ./test/integration
+
+# optional live test against Kraken
+TEST_LIVE_KRAKEN=1 go test -v ./test/integration -run Live
+```
+
+## Docker
+
+```bash
+# build image
+docker build -t go-exercise:latest .
+
+# run container (inline env)
+docker run --rm -p 8080:8080 -e PORT=8080 -e CACHE_TTL=60s -e HTTP_TIMEOUT=3s go-exercise:latest
+
+# or using env file in deploy/env
+cp deploy/env/dev.env.example deploy/env/dev.env
+docker run --rm -p 8080:8080 --env-file deploy/env/dev.env go-exercise:latest
+```
+
+## Health Endpoints
+
+- Liveness: `GET /healthz` → 200 OK
+- Readiness: `GET /readyz` → 200 OK
