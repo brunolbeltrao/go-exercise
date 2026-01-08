@@ -55,17 +55,20 @@ cp env.example .env
 set -a; source .env; set +a
 ```
 
-## Tests
+Run tests via Docker:
 
 ```bash
-# run all tests
-go test ./...
+# all tests
+docker run --rm -v "$PWD":/src -w /src golang:1.22 go test ./...
 
-# run only integration tests
-go test -v ./test/integration
+# with race detector and coverage
+docker run --rm -v "$PWD":/src -w /src golang:1.22 go test -race -cover ./...
+
+# only integration tests
+docker run --rm -v "$PWD":/src -w /src golang:1.22 go test -v ./test/integration
 
 # optional live test against Kraken
-TEST_LIVE_KRAKEN=1 go test -v ./test/integration -run Live
+docker run --rm -v "$PWD":/src -w /src -e TEST_LIVE_KRAKEN=1 golang:1.22 go test -v ./test/integration -run Live
 ```
 
 
